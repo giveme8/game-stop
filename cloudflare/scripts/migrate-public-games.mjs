@@ -25,7 +25,7 @@ import { zipSync } from 'fflate';
 const BUFFERED_LIMIT = 32 * 1024 * 1024;
 
 function parseArgs(argv) {
-  const args = { source: 'https://game-stop.baobaobao.online', target: '', only: [], limit: 0, keep: false, timeout: 120000 };
+  const args = { source: 'https://game-stop.baobaobao.online', target: '', only: [], limit: 0, keep: false, timeout: 120000, records: '', verify: true };
   for (let index = 0; index < argv.length; index++) {
     const flag = argv[index];
     const next = () => argv[++index];
@@ -34,6 +34,8 @@ function parseArgs(argv) {
     else if (flag === '--only') args.only = next().split(',').map(s => s.trim()).filter(Boolean);
     else if (flag === '--limit') args.limit = Number(next());
     else if (flag === '--timeout') args.timeout = Number(next());
+    else if (flag === '--records') args.records = next();
+    else if (flag === '--no-verify') args.verify = false;
     else if (flag === '--keep') args.keep = true;
     else throw new Error(`unknown flag ${flag}`);
   }
@@ -75,7 +77,7 @@ function imageExtension(bytes) {
   return '';
 }
 
-const TRANSIENT = /TLS handshake timeout|connection reset|EOF|timeout|temporarily unavailable|502|503|504|broken pipe/i;
+const TRANSIENT = /TLS handshake timeout|connection reset|PROTOCOL_ERROR|cannot retry|stream error|GOAWAY|connection refused|EOF|timeout|temporarily unavailable|502|503|504|broken pipe/i;
 
 /** Retry only on transport failures: an application-level rejection is final. */
 function runCLIRetry(args, env, attempts = 5) {
@@ -122,6 +124,26 @@ function gameJSON(entry, cover) {
   return doc;
 }
 
+/**
+ * Per-game digests of what this tool published, so a later run can still verify
+ * games whose upload was skipped (already present, or retried after a network
+ * failure). Only digests the source catalog already publishes are stored.
+ */
+function mergeRecords(copied, recordsPath) {
+  let existing = [];
+  if (recordsPath) {
+    try { existing = JSON.parse(readFileSync(recordsPath, 'utf8')); } catch { existing = []; }
+    if (!Array.isArray(existing)) existing = [];
+  }
+  const byID = new Map(existing.map(record => [record.id, record]));
+  for (const record of copied) {
+    byID.set(record.id, { id: record.id, pckBytes: record.pckBytes, pckSha256: record.pckSha256 });
+  }
+  const merged = [...byID.values()].sort((a, b) => (a.id < b.id ? -1 : 1));
+  if (recordsPath) writeFileSync(recordsPath, JSON.stringify(merged, null, 2));
+  return merged;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const token = process.env.GAMESTOP_TOKEN;
@@ -139,6 +161,7 @@ async function main() {
   if (args.limit) selected = selected.slice(0, args.limit);
 
   const work = mkdtempSync(join(tmpdir(), 'gamestop-migrate-'));
+  const recordsPath = args.records || join(work, 'migrated-records.json');
   const report = { copied: [], skipped: [], failed: [], barePCK: [] };
   try {
     for (const game of selected) {
@@ -211,30 +234,37 @@ async function main() {
         process.stderr.write(`FAILED ${game.id}: ${error.message}\n`);
       }
     }
+
+    // Verification happens before the work directory is removed: the anonymous
+    // download writes into it, so cleanup must not run first.
+    const verified = [];
+    const records = mergeRecords(report.copied, recordsPath);
+    if (args.verify) {
+      const catalog = targetGames(env, args.target, true);
+      for (const record of records) {
+        const online = catalog.get(record.id);
+        if (!online) { verified.push({ id: record.id, ok: false, reason: 'missing from the anonymous target catalog' }); continue; }
+        const inCatalog = online.package?.sha256 === record.pckSha256 && online.package?.size === record.pckBytes;
+        if (!inCatalog) { verified.push({ id: record.id, ok: false, reason: 'catalog size/sha256 mismatch' }); continue; }
+        // Independent check: download the published bytes without any credential
+        // and re-hash them, instead of trusting the upload response.
+        const downloaded = verifyAnonymousDownload(env, args.target, record, work);
+        verified.push({ id: record.id, ...downloaded });
+      }
+    } else {
+      process.stdout.write('verification skipped (--no-verify); records saved for a later run\n');
+    }
+
+    console.log(JSON.stringify({
+      source: args.source, target: args.target,
+      copied: report.copied.length, failed: report.failed, barePCK: report.barePCK,
+      verified, verifiedOK: verified.filter(v => v.ok).length, alreadyPresent: [...targetIDs].length,
+    }, null, 2));
+    if (report.failed.length || verified.some(v => !v.ok)) process.exitCode = 1;
   } finally {
     if (!args.keep) rmSync(work, { recursive: true, force: true });
     else process.stdout.write(`artifacts kept in ${work}\n`);
   }
-
-  const verified = [];
-  const catalog = targetGames(env, args.target, true);
-  for (const record of report.copied) {
-    const online = catalog.get(record.id);
-    if (!online) { verified.push({ id: record.id, ok: false, reason: 'missing from the anonymous target catalog' }); continue; }
-    const inCatalog = online.package?.sha256 === record.pckSha256 && online.package?.size === record.pckBytes;
-    if (!inCatalog) { verified.push({ id: record.id, ok: false, reason: 'catalog size/sha256 mismatch' }); continue; }
-    // Independent check: download the published bytes without any credential
-    // and re-hash them, instead of trusting the upload response.
-    const downloaded = verifyAnonymousDownload(env, args.target, record, work);
-    verified.push({ id: record.id, ...downloaded });
-  }
-
-  console.log(JSON.stringify({
-    source: args.source, target: args.target,
-    copied: report.copied.length, failed: report.failed, barePCK: report.barePCK,
-    verified, verifiedOK: verified.filter(v => v.ok).length, alreadyPresent: [...targetIDs].length,
-  }, null, 2));
-  if (report.failed.length || verified.some(v => !v.ok)) process.exitCode = 1;
 }
 
 await main();
