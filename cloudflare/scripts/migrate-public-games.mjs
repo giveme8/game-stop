@@ -19,7 +19,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { zipSync } from 'fflate';
 
 const BUFFERED_LIMIT = 32 * 1024 * 1024;
@@ -140,7 +140,10 @@ function mergeRecords(copied, recordsPath) {
     byID.set(record.id, { id: record.id, pckBytes: record.pckBytes, pckSha256: record.pckSha256 });
   }
   const merged = [...byID.values()].sort((a, b) => (a.id < b.id ? -1 : 1));
-  if (recordsPath) writeFileSync(recordsPath, JSON.stringify(merged, null, 2));
+  if (recordsPath) {
+    mkdirSync(dirname(recordsPath), { recursive: true });
+    writeFileSync(recordsPath, JSON.stringify(merged, null, 2));
+  }
   return merged;
 }
 
