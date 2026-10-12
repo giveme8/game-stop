@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>登录账号 · Game Stop</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1020;--surface:#111b30;--line:#29364d;--text:#edf2fb;--muted:#a6b4cb;--mint:#a5efd0;--warn:#ffd289;--danger:#ff9d9d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--mint)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+header{border-bottom:1px solid var(--line)}
+.bar{width:min(680px,calc(100% - 36px));margin:0 auto;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{color:var(--text);font-weight:800;letter-spacing:-.5px;text-decoration:none}
+.brand span{color:var(--mint)}
+.nav{display:flex;gap:16px;font-size:14px;color:var(--muted)}
+main{width:min(680px,calc(100% - 36px));margin:0 auto;padding:22px 0 52px}
+h1{font-size:clamp(26px,7vw,32px);letter-spacing:-1px;margin:20px 0 8px}
+h2{font-size:17px;margin:0 0 8px}
+p{margin:0 0 12px}
+.lead{color:var(--muted)}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:20px;margin:0 0 18px;overflow-wrap:anywhere}
+label{display:block;margin:16px 0 6px;font-size:14px;color:var(--muted)}
+input,select,button{font:inherit;width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:#0c1526;color:var(--text)}
+button{cursor:pointer;background:var(--mint);border-color:var(--mint);color:var(--bg);font-weight:700;margin-top:16px}
+button.ghost{background:transparent;color:var(--text)}
+button[disabled]{opacity:.5;cursor:not-allowed}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.status{font-size:14px;color:var(--muted);margin:14px 0 0}
+.status.warn{color:var(--warn)}
+.status.error{color:var(--danger)}
+.fine{font-size:12px;color:var(--muted)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12px;margin-top:10px}
+.foot{width:min(680px,calc(100% - 36px));margin:0 auto;padding:18px 0}
+@media(max-width:480px){.card{padding:16px}}
+</style>
+<script src="/auth.js" defer></script>
+</head>
+<body>
+<header><div class="bar"><a class="brand" href="/">GAME STOP<span>.</span></a><nav class="nav" aria-label="账号导航"><a href="/register">注册</a><a href="/account">我的账号</a></nav></div></header>
+<main>
+<h1>登录账号</h1>
+<p class="lead">使用管理员已审核通过的用户名与密码登录。登录会话只保存在本次标签页的 sessionStorage 中，关闭标签页即失效，不会写入网址、Cookie 或日志。</p>
+<section class="card" aria-labelledby="login-title">
+<h2 id="login-title">账号凭据</h2>
+<form id="login-form" autocomplete="off" novalidate>
+<label for="login-name">用户名</label>
+<input id="login-name" name="name" type="text" autocomplete="username" spellcheck="false" required maxlength="32" pattern="[A-Za-z0-9_-]{3,32}">
+<label for="login-password">密码</label>
+<input id="login-password" name="password" type="password" autocomplete="current-password" required maxlength="128">
+<button id="login-submit" type="submit">登录</button>
+<p class="status" id="login-status" role="status" aria-live="polite">请输入用户名与密码。</p>
+</form>
+<noscript><p class="hint">本页需要 JavaScript 才能登录，请在启用后重试。</p></noscript>
+</section>
+<p class="fine">还没有账号？<a href="/register">注册账号</a>（需管理员审核）。审核进度可在<a href="/account">我的账号</a>查看。</p>
+</main>
+<footer><div class="foot">GAME STOP · 登录会话仅用于管理自己的 Token</div></footer>
+</body>
+</html>

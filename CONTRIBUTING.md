@@ -1,10 +1,10 @@
 # Contributing to Game Stop
 
-欢迎改进网站、服务端、CLI、游戏接入 SDK、文档与测试。
+欢迎改进网站、服务端、CLI、游戏接入 SDK、Cloudflare 原生 SaaS 实现、文档与测试。
 
 ## 范围
 
-原生 HarmonyOS / Android / iOS 播放器不在本仓库。请勿提交客户端源码、引擎二进制、签名资料、游戏素材或私有仓库的历史。首次贡献前请阅读 [AGENTS.md](AGENTS.md) 与 [工程约束](docs/engineering/constraints.md)。
+原生 HarmonyOS / Android / iOS 播放器不在本仓库。请勿提交客户端源码、引擎二进制、签名资料、游戏素材、生产配置或私有仓库的历史。首次贡献前请阅读 [AGENTS.md](AGENTS.md) 与 [工程约束](docs/engineering/constraints.md)。
 
 ## 本地验证
 
@@ -13,10 +13,11 @@
 node --test server/internal/library/*.test.cjs
 python3 -m unittest discover -s deploy -p 'test_*.py' -v
 python3 scripts/check-public-boundary.py
+(cd cloudflare && npm ci && npm run check && npm test && npm run dry-run)
 wing check --strict
 ```
 
-Go >= 1.24；Node >= 22。MySQL 专属测试需设置 `TEST_MYSQL_DSN` 为专用可销毁数据库。请在 PR 中区分已运行和跳过的测试。不要使用生产凭据、数据或真实游戏作为公开测试样本。
+Go >= 1.24；Node >= 22。MySQL 专属测试需设置 `TEST_MYSQL_DSN` 为专用可销毁数据库。`.game`/PCK 上传与协议变更必须**同时**改 `server/` 与 `cloudflare/` 两套实现，并保留两侧同等强度的校验。请在 PR 中区分已运行和跳过的测试。不要使用生产凭据、数据或真实游戏作为公开测试样本，也不要在 PR 里执行 `wrangler deploy` 或远端 D1 迁移（那是操作员动作，公开 CI 不持有这些凭据）。`npm run dry-run` 只打包 Worker，不接触线上资源。
 
 可选 Godot SDK 测试（仓库根目录）：
 

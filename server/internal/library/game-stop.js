@@ -10,7 +10,7 @@
   const boardOK = board => board === 'score' || board === 'time-ms';
   class GameStopSDK {
     #base; #game; #token; #timeout; #speech = new Map();
-    constructor({ baseURL = 'https://game-stop.baobaobao.online', gameId, playToken = '', timeoutMs = 15000 } = {}) {
+    constructor({ baseURL = 'https://game-stop.giveme8.com', gameId, playToken = '', timeoutMs = 15000 } = {}) {
       let url;
       try { url = new URL(baseURL); } catch { invalid('Invalid baseURL'); }
       if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') invalid('baseURL must be an HTTPS origin');

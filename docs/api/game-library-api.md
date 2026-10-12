@@ -12,7 +12,10 @@ applies_to:
 
 本文描述公开服务端与发布 CLI 的 HTTP 契约。公开仓库不包含原生客户端、原生运行时/帧、引擎二进制或其源码历史；客户端一期面向 **HarmonyOS NEXT**，Android / iOS 为未来计划，不代表已发布能力。范围见 [ADR-0001](../adr/0001-public-server-client-boundary.md)。
 
-托管实例 origin：`https://game-stop.baobaobao.online`；自建实例使用自己的 HTTPS origin。注册开放但需管理员审核（白名单），审核命令在服务器本机执行，**不提供 HTTP 管理接口**。业务接口凭 `Authorization: Bearer <token>` 鉴权。省略 Token 或提供格式错误、过期、已撤销等不可用凭据时，公开端点按匿名请求处理，只返回公开数据；需要有效凭据的端点仍返回 401，私有内容不因此可见。认证存储故障返回 503，不视为匿名成功。
+托管实例（SaaS）origin：`https://game-stop.giveme8.com`；自建实例使用自己的 HTTPS origin。注册开放但需管理员审核（白名单），审核命令在服务器本机执行，**不提供 HTTP 管理接口**。业务接口凭 `Authorization: Bearer <token>` 鉴权。省略 Token 或提供格式错误、过期、已撤销等不可用凭据时，公开端点按匿名请求处理，只返回公开数据；需要有效凭据的端点仍返回 401，私有内容不因此可见。认证存储故障返回 503，不视为匿名成功。
+
+SaaS 由 `cloudflare/` 的 TypeScript Worker 实现提供；更早的 Go + MySQL 实例 `https://game-stop.baobaobao.online` 仍可访问，
+保留自己的账号与成绩，与 SaaS 不互通（新站需重新注册，旧站 Token 在新站无效）。
 
 | 方法 | 路径 | 行为 |
 |---|---|---|

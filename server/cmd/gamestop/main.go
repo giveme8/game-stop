@@ -287,7 +287,7 @@ func run(args []string) error {
 		return nil
 	}
 	fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
-	base := fs.String("server", "https://game-stop.baobaobao.online", "HTTPS server origin")
+	base := fs.String("server", "https://game-stop.giveme8.com", "HTTPS server origin")
 	id := fs.String("id", "", "game ID")
 	file := fs.String("file", "", "upload .game/.pck path, verify target, or download destination (must not exist)")
 	meta := fs.String("metadata", "", "upload metadata JSON file for bare .pck uploads; .game carries its own game.json")

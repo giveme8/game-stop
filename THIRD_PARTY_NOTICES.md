@@ -54,8 +54,22 @@ Go is BSD-3-Clause; the module minimum is Go 1.24. Release bundles record the ac
 
 The website and JavaScript SDK use first-party HTML/CSS/JavaScript and browser APIs; there is no React, CSS framework, downloaded font, icon package or CDN runtime dependency in the reviewed source. Font-family names are local system fallbacks, not bundled fonts. The Godot SDK is first-party GDScript using Godot built-in APIs. No engine binary is bundled. OSS support uses the Go standard library rather than an Alibaba SDK package.
 
+## Cloudflare native SaaS modules（`cloudflare/`）
+
+The Worker has exactly two runtime dependencies; everything else in `cloudflare/package.json` is build/test tooling that is not shipped in the deployed bundle.
+
+| Module | Version | License | Upstream |
+| --- | --- | --- | --- |
+| `@noble/hashes` | 2.0.1 | MIT | <https://github.com/paulmillr/noble-hashes> |
+| `fflate` | 0.8.3 | MIT | <https://github.com/101arrowz/fflate> |
+
+`fflate` is pinned at **0.8.3** deliberately: 0.8.0–0.8.2 are affected by a ZIP64 infinite-loop advisory ([GHSA-px8p-9vwx-vf98](https://github.com/advisories/GHSA-px8p-9vwx-vf98)) and the Worker parses untrusted archives. Do not downgrade without an equivalent fix.
+
+Build, test and deployment tooling (not bundled into the deployed Worker): `wrangler` 4.149.0 (MIT OR Apache-2.0), `miniflare` 4.20260730.0 (MIT), `typescript` 5.9.3 (Apache-2.0), `tsx` 4.20.6 (MIT), `@cloudflare/workers-types` 5.20261012.1 (MIT OR Apache-2.0). The relevant license texts are kept under `third_party/licenses/`.
+
 ## Ecosystem and infrastructure thanks (not linked application modules)
 
+- **Cloudflare Workers, D1 and R2**: the SaaS edition runs on these hosted services. Game Stop does not redistribute Cloudflare software; the deployed Worker bundle contains only Game Stop code plus the two MIT libraries listed above. Running your own instance is subject to Cloudflare's own terms and pricing.
 - **Godot Engine** and the **godot-ohos** community: game-authoring and HarmonyOS adaptation work. Official Godot is MIT; each port's own artifacts and included components require their own license review. No port/client binaries are distributed here.
 - **MySQL 8.4**: separately running database, GPLv2 with upstream additional terms and third-party notices. Referencing a container recipe does not bundle or relicense MySQL; redistributing that image is a separate compliance task.
 - **Nginx** (BSD-2-Clause), **Certbot** (Apache-2.0 plus component-specific notices), **Docker Compose** (Apache-2.0), **systemd**, **OpenSSH** and the Linux ecosystem: operator-managed deployment tools, not embedded in these Go binaries. Verify licenses for the exact versions you deploy/distribute.

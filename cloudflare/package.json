@@ -1,0 +1,25 @@
+{
+  "name": "@giveme8/game-stop-cloudflare",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --env production",
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "types": "wrangler types --env production",
+    "dry-run": "wrangler deploy --env production --dry-run"
+  },
+  "dependencies": {
+    "@noble/hashes": "2.0.1",
+    "fflate": "0.8.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "miniflare": "^4.20260730.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "wrangler": "4.149.0"
+  }
+}

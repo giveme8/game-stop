@@ -13,7 +13,7 @@ ROOT_FILES = {
     'THIRD_PARTY_NOTICES.md', 'CONTRIBUTING.md', 'SECURITY.md', 'wing.config.yaml',
 }
 PREFIXES = (
-    'server/', 'sdk/', 'docs/', 'third_party/licenses/',
+    'server/', 'sdk/', 'docs/', 'third_party/licenses/', 'cloudflare/',
 )
 EXACT_FILES = {
     '.github/workflows/ci.yml', '.github/workflows/cli.yml',
@@ -28,7 +28,7 @@ FORBIDDEN_SUFFIXES = {
 }
 FORBIDDEN_PARTS = {
     'app', 'frame', 'android', 'ios', 'harmony', 'node_modules', '.godot',
-    'vendor', 'data', 'artifacts', '__pycache__',
+    'vendor', 'data', 'artifacts', '__pycache__', '.wrangler',
 }
 
 def violations(paths):
@@ -38,7 +38,7 @@ def violations(paths):
         allowed = path in ROOT_FILES or path in EXACT_FILES or path.startswith(PREFIXES)
         forbidden = (p.suffix.lower() in FORBIDDEN_SUFFIXES
                      or bool(set(p.parts) & FORBIDDEN_PARTS)
-                     or p.name.startswith('.env')
+                     or p.name.startswith(('.env', '.dev.vars'))
                      or p.name in {'known_hosts', 'server.env', 'id_rsa', 'id_ed25519'})
         if not allowed or forbidden:
             errors.append(path)

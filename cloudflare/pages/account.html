@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>我的账号 · Game Stop</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1020;--surface:#111b30;--line:#29364d;--text:#edf2fb;--muted:#a6b4cb;--mint:#a5efd0;--warn:#ffd289;--danger:#ff9d9d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--mint)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+header{border-bottom:1px solid var(--line)}
+.bar{width:min(680px,calc(100% - 36px));margin:0 auto;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{color:var(--text);font-weight:800;letter-spacing:-.5px;text-decoration:none}
+.brand span{color:var(--mint)}
+.nav{display:flex;gap:16px;font-size:14px;color:var(--muted)}
+main{width:min(680px,calc(100% - 36px));margin:0 auto;padding:22px 0 52px}
+h1{font-size:clamp(26px,7vw,32px);letter-spacing:-1px;margin:20px 0 8px}
+h2{font-size:17px;margin:0 0 8px}
+p{margin:0 0 12px}
+.lead{color:var(--muted)}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:20px;margin:0 0 18px;overflow-wrap:anywhere}
+label{display:block;margin:16px 0 6px;font-size:14px;color:var(--muted)}
+input,select,button{font:inherit;width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:#0c1526;color:var(--text)}
+button{cursor:pointer;background:var(--mint);border-color:var(--mint);color:var(--bg);font-weight:700;margin-top:16px}
+button.ghost{background:transparent;color:var(--text)}
+button[disabled]{opacity:.5;cursor:not-allowed}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.status{font-size:14px;color:var(--muted);margin:14px 0 0}
+.status.warn{color:var(--warn)}
+.status.error{color:var(--danger)}
+.state{font-size:13px;color:var(--muted)}
+.state.active{color:var(--mint)}
+.state.revoked{color:var(--warn)}
+ul{list-style:none;margin:0;padding:0}
+li.token-item{border:1px solid var(--line);border-radius:11px;padding:14px;margin-bottom:12px}
+li.token-item p{margin:0;font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+li.token-item .token-id{color:var(--text)}
+li.token-item button{width:auto;padding:8px 14px;margin-top:12px}
+.secret{border:1px solid var(--mint);border-radius:12px;background:#0f2318;padding:16px;margin:16px 0 0}
+.secret code{display:block;font:13px/1.7 ui-monospace,Consolas,monospace;color:var(--mint);overflow-wrap:anywhere;margin:10px 0}
+.secret button{width:auto;display:inline-block;padding:9px 14px;margin:0 10px 0 0}
+.fine{font-size:12px;color:var(--muted)}
+.card.danger{border-color:var(--danger)}
+.card.danger h2{color:var(--danger)}
+button.danger{background:var(--danger);border-color:var(--danger);color:#2b0f14}
+button.danger.ghost{background:transparent;color:var(--danger)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12px;margin-top:10px}
+.foot{width:min(680px,calc(100% - 36px));margin:0 auto;padding:18px 0}
+@media(max-width:480px){.card{padding:16px}}
+</style>
+<script src="/auth.js" defer></script>
+</head>
+<body>
+<header><div class="bar"><a class="brand" href="/">GAME STOP<span>.</span></a><nav class="nav" aria-label="账号导航"><a href="/login">登录</a><a href="/register">注册</a></nav></div></header>
+<main>
+<h1>我的账号</h1>
+<p class="lead">查看账号审核状态，签发、查看与撤销个人 Token。Token 明文只在签发成功时显示一次。</p>
+<p class="status{{if .Unavailable}} error{{end}}" id="account-status" role="status" aria-live="polite">{{if .Unavailable}}加载失败：账号信息暂时无法加载，请稍后重试。{{else if .SignedIn}}已登录，正在载入账号状态…{{else}}未登录：当前浏览器没有登录会话，请先登录。{{end}}</p>
+
+<div id="account-signed-out" class="card"{{if .SignedIn}} hidden{{end}}>
+<h2>未登录</h2>
+<p>当前浏览器没有可用的登录会话，因此无法显示账号状态或签发 Token。</p>
+<p><a href="/login">前往登录</a>；还没有账号？<a href="/register">注册账号</a>（需管理员审核白名单）。</p>
+</div>
+
+<div id="account-view"{{if not .SignedIn}} hidden{{end}}>
+<section class="card" aria-labelledby="profile-title">
+<h2 id="profile-title">账号状态</h2>
+<p>用户名：<strong id="account-name">{{.Name}}</strong></p>
+<p id="account-created">{{if not .CreatedAt.IsZero}}创建时间：{{date .CreatedAt}}{{end}}</p>
+<p id="account-approved">{{if .ApprovedAt}}审核通过时间：{{dateptr .ApprovedAt}}{{end}}</p>
+<p class="state" id="account-status-text">{{.StatusText}}</p>
+<p class="status warn" id="account-pending-note"{{if not .Pending}} hidden{{end}}>等待管理员审核：白名单通过前不能签发 Token。你的登录会话仍然有效，可以稍后回来查看。</p>
+<p class="status error" id="account-rejected-note"{{if not .Rejected}} hidden{{end}}>账号已被拒绝：不能签发 Token。若认为这是误判，请联系管理员。</p>
+<button id="logout" type="button" class="ghost">退出登录</button>
+</section>
+
+<section class="card" aria-labelledby="issue-title">
+<h2 id="issue-title">签发新 Token</h2>
+<form id="token-form" autocomplete="off" novalidate>
+<label for="token-ttl">有效期</label>
+<select id="token-ttl" name="ttlHours"{{if not .CanIssue}} disabled{{end}}>
+<option value="1">1 小时</option>
+<option value="24">24 小时</option>
+<option value="168">7 天</option>
+<option value="720" selected>30 天（默认）</option>
+<option value="2160">90 天</option>
+<option value="8760">365 天</option>
+</select>
+<p class="hint">范围 1–8760 小时，省略时默认 720 小时。Token 到期自动失效，也可以随时撤销。</p>
+<button id="token-submit" type="submit"{{if not .CanIssue}} disabled{{end}}>签发 Token</button>
+<p class="status" id="token-status" role="status" aria-live="polite"></p>
+</form>
+<div class="secret" id="token-secret" hidden>
+<p><strong>明文 Token 只显示一次，请立即保存；不要分享。</strong>平台只保存 Token 的摘要，关闭提示后无法再次查看，也无法帮你找回。</p>
+<code id="token-value"></code>
+<button id="token-copy" type="button">复制</button>
+<button id="token-dismiss" type="button" class="ghost">我已保存，隐藏</button>
+<p class="status" id="token-copy-status" role="status" aria-live="polite"></p>
+</div>
+<p class="fine">Token 可以上传、修改与删除你名下的游戏。请像密码一样保管：不要提交到 Git、聊天记录、共享日志或浏览器地址栏。</p>
+</section>
+
+<section class="card" aria-labelledby="tokens-title">
+<h2 id="tokens-title">已签发的 Token</h2>
+<p class="status" id="token-list-status" role="status" aria-live="polite"></p>
+<ul id="token-list">
+{{range .Tokens}}<li class="token-item" data-token-id="{{.ID}}"><p class="token-id">id：{{.ID}}</p><p>创建时间：{{date .CreatedAt}} · 过期时间：{{date .ExpiresAt}}</p><p class="state{{if .RevokedAt}} revoked{{else}} active{{end}}">{{if .RevokedAt}}已撤销 {{dateptr .RevokedAt}}{{else}}有效{{end}}</p>{{if not .RevokedAt}}<button type="button" class="ghost" data-token-id="{{.ID}}">撤销</button>{{end}}</li>{{end}}
+</ul>
+<p class="fine">撤销后使用该 Token 的请求会立即失效。任何页面都不会再次显示 Token 明文。</p>
+</section>
+
+<section class="card danger" aria-labelledby="close-title">
+<h2 id="close-title">注销账号</h2>
+<p>注销后本账号立即失效、<strong>不可恢复</strong>：密码、Token、登录会话、游玩与设备凭据都会被销毁。你名下的游戏与排行榜成绩会保留。</p>
+<button id="close-reveal" type="button" class="ghost danger">我要注销账号…</button>
+<form id="close-form" autocomplete="off" novalidate hidden>
+<label for="close-password">当前密码</label>
+<input id="close-password" name="password" type="password" autocomplete="current-password">
+<label for="close-name">输入账号名确认</label>
+<input id="close-name" name="confirmName" type="text" autocomplete="off" spellcheck="false">
+<p class="hint">密码与账号名都填对才会执行注销；注销后无法登录，也无法找回。</p>
+<button id="close-submit" type="submit" class="danger">确认注销</button>
+<button id="close-cancel" type="button" class="ghost">取消</button>
+<p class="status" id="close-status" role="status" aria-live="polite"></p>
+</form>
+</section>
+</div>
+
+<noscript><p class="hint">本页需要 JavaScript 才能读取账号状态与签发 Token；请启用后重试。</p></noscript>
+</main>
+<footer><div class="foot">GAME STOP · 账号状态与 Token 管理</div></footer>
+</body>
+</html>

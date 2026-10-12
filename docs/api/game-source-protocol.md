@@ -41,7 +41,8 @@ applies_to:
 缓存与安装记录必须隔离；不得在失败时把凭据自动转发到另一个源。切换源后，旧请求不得覆盖
 新源的数据。同一个游戏 ID 在不同源中不应被默认视为同一可信内容。
 
-托管实例示例为 `https://game-stop.baobaobao.online`。静态 LAN 源可以用于不带凭据的开发，
+托管实例（SaaS）为 `https://game-stop.giveme8.com`；更早的实例 `https://game-stop.baobaobao.online`
+仍可访问，但保留自己的账号与成绩，与 SaaS 互不相通。静态 LAN 源可以用于不带凭据的开发，
 不因此自动拥有账号或成绩能力。平台 SDK 地址与信任边界见 [SDK 契约](platform-sdk.md)。
 
 ## 3. 清单 schema

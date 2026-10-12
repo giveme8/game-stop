@@ -2,9 +2,22 @@
 
 **面向 Godot 游戏的开源游戏库平台：网站、服务端、发布 CLI 与游戏接入 SDK。**
 
-[在线站点](https://game-stop.baobaobao.online/) · [API 文档](docs/api/game-library-api.md) · [游戏包格式](docs/api/game-bundle-format.md) · [SDK 接入](docs/api/platform-sdk.md) · [自建部署](deploy/README.md)
+[在线站点](https://game-stop.giveme8.com/) · [API 文档](docs/api/game-library-api.md) · [游戏包格式](docs/api/game-bundle-format.md) · [SDK 接入](docs/api/platform-sdk.md) · [自建部署](deploy/README.md)
 
 Game Stop 帮助游戏作者发布作品，让玩家浏览游戏库，并通过兼容客户端获取游戏。服务端使用 Go + GORM + MySQL，网站随 Go 二进制内嵌，无需单独安装前端依赖或构建前端工程。
+
+## 版本与部署
+
+线上站点 [game-stop.giveme8.com](https://game-stop.giveme8.com/) 运行 **Cloudflare 原生 SaaS 版**：`cloudflare/` 下的
+TypeScript Worker + D1 + R2。本仓库的 `server/` 仍是公开可自建的 Go + GORM + MySQL 实现。
+两套后端**实现同一套 HTTP 契约**，`docs/api/` 下的协议文档对两者都适用。
+
+旧的托管实例 [game-stop.baobaobao.online](https://game-stop.baobaobao.online/) **没有关停**，仍独立运行，保留它自己的账号、
+私有游戏与成绩；SaaS 是全新实例，用户需要重新注册，旧站 Token 在新站无效，两边数据互不相通。
+
+SaaS 上传上限：裸 pck 单请求约 **95 MiB**（Cloudflare Free 套餐的单请求体上限为 100 MB；更大的包
+需要升级套餐或改用未来的分片上传协议），`.game` 容器上限 **32 MiB**；**更大的游戏必须发布为裸 pck。**
+自建实现的裸 pck 上限为 512 MiB。
 
 ## 开源范围与客户端规划
 

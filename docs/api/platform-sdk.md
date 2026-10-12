@@ -26,8 +26,11 @@ applies_to:
 
 | SDK | 平台地址配置 |
 |---|---|
-| 浏览器 | `new GameStopSDK({baseURL, gameId, playToken})`；省略 `baseURL` 时当前默认值为 `https://game-stop.baobaobao.online`，不是自动读取页面 origin |
+| 浏览器 | `new GameStopSDK({baseURL, gameId, playToken})`；省略 `baseURL` 时当前默认值为 `https://game-stop.giveme8.com`，不是自动读取页面 origin |
 | Godot | `configure(base_url, game_id, play_token)`；由集成方显式传入 HTTPS origin |
+
+托管平台的 origin 是 `https://game-stop.giveme8.com`（Cloudflare 原生 SaaS 实现）；
+更早的实例 `https://game-stop.baobaobao.online` 仍可访问，但账号、成绩与 SaaS 相互独立。
 
 页面确实托管在平台同源时可以显式传 `location.origin`；跨源游戏应使用经用户/宿主信任的
 平台地址。账号 Token 不得交给游戏，也绝不经 HTTP 发送。只有下文的授权流程允许开发期
@@ -72,7 +75,7 @@ HTTP 的 `mode` 省略或空字符串时为 `default`，其他值必须匹配 `^
 
 ## HTTPS 平台弹窗授权
 
-游戏在用户点击后打开 `https://game-stop.baobaobao.online/connect?gameId=...&mode=...&origin=...&state=...`。origin 使用 `location.origin` 精确序列化并 URL 编码；state 使用密码学随机 16 字节、32 位小写十六进制。禁止把账号 Token 或游玩凭据放在 URL。页面拒绝未知/重复参数、非法 ID/mode/state/origin；state 必填。origin 只允许 HTTPS，或 localhost、私有 IPv4、127/8 回环的 HTTP；拒绝 userinfo/path/query/fragment、非标准 IP 拼写、显式默认端口等非精确来源。
+游戏在用户点击后打开 `https://game-stop.giveme8.com/connect?gameId=...&mode=...&origin=...&state=...`。origin 使用 `location.origin` 精确序列化并 URL 编码；state 使用密码学随机 16 字节、32 位小写十六进制。禁止把账号 Token 或游玩凭据放在 URL。页面拒绝未知/重复参数、非法 ID/mode/state/origin；state 必填。origin 只允许 HTTPS，或 localhost、私有 IPv4、127/8 回环的 HTTP；拒绝 userinfo/path/query/fragment、非标准 IP 拼写、显式默认端口等非精确来源。
 
 平台页显示游戏、模式、精确来源，用户手动输入自己的现有账号 Token 并勾选授权。LAN HTTP 明确警告：游戏页面明文可被局域网攻击者篡改，短期游玩凭据可被窃取，绝不能把账号 Token 交给该游戏。账号 Token 只用于同源 fetch POST play-sessions 的 Authorization Bearer，不写日志、URL、localStorage、Cookie或游戏；输入框发送后清空。页面只在 HTTPS 顶层且有 opener 时启用。
 
@@ -85,13 +88,13 @@ HTTP 的 `mode` 省略或空字符串时为 `default`，其他值必须匹配 `^
 ## 浏览器游戏
 
 ```html
-<script src="https://game-stop.baobaobao.online/sdk/v1/game-stop.js"></script>
+<script src="https://game-stop.giveme8.com/sdk/v1/game-stop.js"></script>
 ```
 
 ```js
 // playToken 来自受信任宿主，不是账号 Token。
 const sdk = new GameStopSDK({
-  baseURL: 'https://game-stop.baobaobao.online', // 自建实例改为自己的可信 HTTPS origin
+  baseURL: 'https://game-stop.giveme8.com', // 自建实例改为自己的可信 HTTPS origin
   gameId: 'demo',
   playToken
 });

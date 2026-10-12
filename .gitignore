@@ -17,6 +17,9 @@ __pycache__/
 *.pyc
 .godot/
 node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.*
 out/
 dist/
 artifacts/

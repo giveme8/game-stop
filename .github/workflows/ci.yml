@@ -59,6 +59,18 @@ jobs:
           python3 -m unittest discover -s deploy -p 'test_*.py' -v
           docker compose -f deploy/compose.yaml config --quiet
           bash -n scripts/package-cli.sh
+      - name: Cloudflare Worker tests
+        working-directory: cloudflare
+        run: |
+          npm ci
+          npm run check
+          npm test
+          npm run dry-run
+      - name: Dependency audits
+        run: |
+          cd server && go version
+          cd ../cloudflare && npm audit --audit-level=high
       - name: Governance validation
         run: npx --yes @bossmissing/wing@0.14.2 check --strict
-      # No production environment, deploy job, SSH key or live OSS credentials.
+      # No production environment, deploy job, SSH key, Cloudflare token or live OSS credentials.
+      # `npm run dry-run` only bundles the Worker; it never uploads or touches D1/R2.

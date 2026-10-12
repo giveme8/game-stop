@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "game-stop-saas-dev",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": false },
+  "rules": [{ "type": "Text", "globs": ["**/*.html", "**/auth.js", "**/connect.js", "**/device_connect.js", "**/game-stop.js"], "fallthrough": false }],
+  "vars": {
+    "PUBLIC_BASE_URL": "http://localhost:8787",
+    "MAX_PACKAGE_BYTES": "99614720",
+    "R2_ACCOUNT_ID": "bf2b0e6b408c36dce92d77b452b1d5fa",
+    "R2_BUCKET": "game-stop-saas-local",
+    "R2_URL_TTL": "300"
+  },
+  "d1_databases": [{ "binding": "DB", "database_name": "game-stop-saas-local", "database_id": "local-game-stop", "migrations_dir": "migrations" }],
+  "r2_buckets": [{ "binding": "PACKAGES", "bucket_name": "game-stop-saas-local" }],
+  "env": {
+    "production": {
+      "name": "game-stop-saas",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [{ "pattern": "game-stop.giveme8.com", "custom_domain": true }],
+      "vars": {
+        "PUBLIC_BASE_URL": "https://game-stop.giveme8.com",
+        "MAX_PACKAGE_BYTES": "99614720",
+        "R2_ACCOUNT_ID": "bf2b0e6b408c36dce92d77b452b1d5fa",
+        "R2_BUCKET": "game-stop-saas-packages",
+        "R2_URL_TTL": "300"
+      },
+      "d1_databases": [{ "binding": "DB", "database_name": "game-stop-saas-db", "database_id": "8bc67581-ab0e-4ad4-9f5f-d72070e4a4d7", "migrations_dir": "migrations" }],
+      "r2_buckets": [{ "binding": "PACKAGES", "bucket_name": "game-stop-saas-packages" }]
+    }
+  }
+}

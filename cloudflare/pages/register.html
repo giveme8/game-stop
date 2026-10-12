@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>注册账号 · Game Stop</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1020;--surface:#111b30;--line:#29364d;--text:#edf2fb;--muted:#a6b4cb;--mint:#a5efd0;--warn:#ffd289;--danger:#ff9d9d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--mint)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+header{border-bottom:1px solid var(--line)}
+.bar{width:min(680px,calc(100% - 36px));margin:0 auto;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{color:var(--text);font-weight:800;letter-spacing:-.5px;text-decoration:none}
+.brand span{color:var(--mint)}
+.nav{display:flex;gap:16px;font-size:14px;color:var(--muted)}
+main{width:min(680px,calc(100% - 36px));margin:0 auto;padding:22px 0 52px}
+h1{font-size:clamp(26px,7vw,32px);letter-spacing:-1px;margin:20px 0 8px}
+h2{font-size:17px;margin:0 0 8px}
+p{margin:0 0 12px}
+.lead{color:var(--muted)}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:20px;margin:0 0 18px;overflow-wrap:anywhere}
+label{display:block;margin:16px 0 6px;font-size:14px;color:var(--muted)}
+input,select,button{font:inherit;width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:#0c1526;color:var(--text)}
+button{cursor:pointer;background:var(--mint);border-color:var(--mint);color:var(--bg);font-weight:700;margin-top:16px}
+button.ghost{background:transparent;color:var(--text)}
+button[disabled]{opacity:.5;cursor:not-allowed}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.status{font-size:14px;color:var(--muted);margin:14px 0 0}
+.status.warn{color:var(--warn)}
+.status.error{color:var(--danger)}
+.fine{font-size:12px;color:var(--muted)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12px;margin-top:10px}
+.foot{width:min(680px,calc(100% - 36px));margin:0 auto;padding:18px 0}
+@media(max-width:480px){.card{padding:16px}}
+</style>
+<script src="/auth.js" defer></script>
+</head>
+<body>
+<header><div class="bar"><a class="brand" href="/">GAME STOP<span>.</span></a><nav class="nav" aria-label="账号导航"><a href="/login">登录</a><a href="/account">我的账号</a></nav></div></header>
+<main>
+<h1>注册账号</h1>
+<p class="lead">注册只提交一个待审核账号：需管理员审核白名单，审核通过前不能签发 Token，也不能用 Token 上传游戏。</p>
+<section class="card" aria-labelledby="register-title">
+<h2 id="register-title">填写账号信息</h2>
+<form id="register-form" autocomplete="off" novalidate>
+<label for="register-name">用户名</label>
+<input id="register-name" name="name" type="text" autocomplete="username" spellcheck="false" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_-]{3,32}" aria-describedby="register-name-hint">
+<p class="hint" id="register-name-hint">3–32 位，仅限字母、数字、下划线与连字符。</p>
+<label for="register-password">密码</label>
+<input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="128" aria-describedby="register-password-hint">
+<p class="hint" id="register-password-hint">10–128 个字符（不超过 128 字节）。密码只用于本次提交，不会被写入网址、日志、页面标题或浏览器存储。</p>
+<label for="register-confirm">确认密码</label>
+<input id="register-confirm" name="confirm" type="password" autocomplete="new-password" required minlength="10" maxlength="128">
+<button id="register-submit" type="submit">提交注册</button>
+<p class="status" id="register-status" role="status" aria-live="polite">请填写用户名、密码与确认密码。</p>
+</form>
+<noscript><p class="hint">本页需要 JavaScript 才能提交注册，请在启用后重试。</p></noscript>
+</section>
+<p class="fine">已有账号？<a href="/login">去登录</a>。注册信息只通过同源 fetch 提交，表单不会直接提交到服务器，也不会把密码放进网址。</p>
+</main>
+<footer><div class="foot">GAME STOP · 自助注册需管理员审核白名单</div></footer>
+</body>
+</html>
