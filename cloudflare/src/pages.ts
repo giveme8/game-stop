@@ -1,5 +1,6 @@
 import { Env, GameRow, HttpError, ID, Identity, escapeHTML, json, nowISO, randomHex } from './types';
 import { parseAssets, parseMetadata, publicGames, representation, assetURL } from './library';
+import { signedObjectURL } from './r2-sign';
 import { renderTemplate } from './template';
 import homeHTML from '../pages/home.html';
 import registerHTML from '../pages/register.html';
@@ -61,17 +62,35 @@ export async function homePage(env: Env, head: boolean): Promise<Response> {
   let status = 200;
   try {
     const rows = await publicGames(env);
-    games = rows.filter(row => ID.test(row.id)).map(row => {
+    const visible = rows.filter(row => ID.test(row.id));
+    games = await Promise.all(visible.map(async row => {
       const meta = parseMetadata(row.metadata);
+      const assets = parseAssets(row.assets);
+      // Covers are served straight from R2 with a short-lived signature, like the
+      // package URLs; without signing configured the platform route still works.
+      const signed = assets.cover ? await signedObjectURL(env, `assets/${row.id}/${assets.cover.name}`) : null;
+      const cover = signed ?? (assets.cover ? `/api/v1/games/${row.id}/assets/${assets.cover.name}` : '');
       return {
         ID: row.id, Title: meta.title, Subtitle: meta.subtitle,
         Description: meta.description || '下载游戏内容包，在兼容的 Godot 播放器中体验。',
         Tags: meta.tags, Engine: meta.engine.version, Size: sizeLabel(row.size),
         DownloadURL: `/api/v1/games/${row.id}/package.pck`,
+        Cover: cover, HasCover: cover !== '',
       };
-    });
+    }));
   } catch { unavailable = true; status = 503; }
-  return html(renderTemplate(homeHTML, { Games: games, Unavailable: unavailable }), status, pageHeaders(false), head);
+  return html(renderTemplate(homeHTML, { Games: games, Unavailable: unavailable }), status, homeHeaders(), head);
+}
+
+/**
+ * The catalog page shows covers fetched from the R2 endpoint, so images need an
+ * explicit `img-src`. Everything else stays as locked down as the other pages.
+ */
+function homeHeaders(): Headers {
+  const headers = pageHeaders(false);
+  headers.set('Content-Security-Policy',
+    "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https://*.r2.cloudflarestorage.com; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+  return headers;
 }
 function sizeLabel(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

@@ -24,6 +24,11 @@ function packageSize(n: number): string {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KiB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MiB`;
 }
+/** Download metadata for a package object: an opaque binary that saves as `<id>.pck`. */
+function packageMetadata(id: string): R2HTTPMetadata {
+  // The id is already validated by the caller; this only builds a filename.
+  return { contentType: 'application/octet-stream', contentDisposition: `attachment; filename="${id}.pck"`, cacheControl: 'private, no-store' };
+}
 export function packageSuffix(row: Pick<GameRow, 'format'>): string {
   return row.format === 'pck' ? 'package.pck' : 'package.game';
 }
@@ -105,9 +110,9 @@ function metadataHeader(request: Request): unknown {
 }
 
 /** Stream the request body into R2, returning the byte count and SHA-256. */
-async function storeStream(env: Env, key: string, body: ReadableStream<Uint8Array>, limit: number): Promise<{ size: number; sha256: string }> {
+async function storeStream(env: Env, key: string, gameID: string, body: ReadableStream<Uint8Array>, limit: number): Promise<{ size: number; sha256: string }> {
   const hash = sha256.create();
-  const upload = await env.PACKAGES.createMultipartUpload(key);
+  const upload = await env.PACKAGES.createMultipartUpload(key, { httpMetadata: packageMetadata(gameID) });
   const parts: R2UploadedPart[] = [];
   const reader = body.getReader();
   let buffered: Uint8Array[] = []; let bufferedSize = 0; let size = 0; let partNumber = 1;
@@ -144,7 +149,7 @@ async function storeStream(env: Env, key: string, body: ReadableStream<Uint8Arra
 async function copyObject(env: Env, from: string, to: string): Promise<void> {
   const source = await env.PACKAGES.get(from);
   if (!source) throw new HttpError(503, 'upload storage unavailable');
-  await env.PACKAGES.put(to, source.body);
+  await env.PACKAGES.put(to, source.body, { httpMetadata: packageMetadata(to.split('/')[1] ?? 'package') });
 }
 
 interface GameWrite { metadata: ReturnType<typeof validateMetadata>; source: Record<string, string>; }
@@ -192,7 +197,7 @@ async function uploadBundle(env: Env, request: Request, id: string, identity: Id
   const plan = await inspectBundle(body, id);
   const stamp = nowISO();
   const name = `games/${id}/${plan.engineVersion.replace(/[^0-9.]/g, '')}-${hex(sha256(plan.pck)).slice(0, 16)}.pck`;
-  await env.PACKAGES.put(name, plan.pck);
+  await env.PACKAGES.put(name, plan.pck, { httpMetadata: packageMetadata(id) });
   const visibility = existing ? existing.visibility : 'private';
   const assetsJSON = await replaceAssets(env, id, plan.assets, []);
   await upsertGame(env, id, identity.userId,
@@ -229,7 +234,7 @@ async function uploadPCK(env: Env, request: Request, id: string, identity: Ident
   const staging = `uploads/${id}-${crypto.randomUUID()}.part`;
   let stored: { size: number; sha256: string };
   try {
-    stored = await storeStream(env, staging, request.body ?? new ReadableStream(), limit);
+    stored = await storeStream(env, staging, id, request.body ?? new ReadableStream(), limit);
     const inspected = await inspectStoredPCK(env, staging, stored.size);
     if (inspected.sha256 !== stored.sha256) throw new HttpError(400, 'upload changed while being read');
     if (metadata.engine.version !== inspected.engineVersion) throw new HttpError(400, 'engine version mismatch');

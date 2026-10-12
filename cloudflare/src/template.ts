@@ -19,7 +19,9 @@ function parse(source: string): Node[] {
     while (index < tokens.length) {
       const token = tokens[index]!;
       const match = /^\{\{(-?)\s*([\s\S]*?)\s*(-?)\}\}$/.exec(token);
-      if (!match) { if (token) body.push({ kind: 'text', text: token.trimStart() }); index++; continue; }
+      // Text between actions is emitted verbatim: trimming it would silently eat
+      // intentional inline spaces such as `{{len .Games}} 款游戏`.
+      if (!match) { if (token) body.push({ kind: 'text', text: token }); index++; continue; }
       const expr = match[2]!;
       index++;
       const head = expr.split(/\s+/)[0]!;
