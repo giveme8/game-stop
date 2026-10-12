@@ -65,3 +65,16 @@ test('the SaaS connect and CLI upload guides stay on the page', () => {
   assert.match(html, /32 MiB/);
   assert.match(html, /95 MiB/);
 });
+
+test('every page links to the public repository', () => {
+  const pages = ['home', 'register', 'login', 'account', 'connect', 'device_connect', 'leaderboard'];
+  for (const name of pages) {
+    const source = readFileSync(new URL(`../pages/${name}.html`, import.meta.url), 'utf8');
+    assert.match(source, /href="https:\/\/github\.com\/giveme8\/game-stop"/, `${name} must link to the repository`);
+    assert.match(source, /rel="noopener noreferrer"/, `${name} must isolate the external link`);
+    assert.match(source, /href="\/favicon\.svg"/, `${name} must declare the favicon`);
+  }
+  const html = renderTemplate(home, { Games: [], Unavailable: false });
+  assert.match(html, /GitHub 开源仓库 ↗/);
+  assert.match(html, /class="nav-optional" href="https:\/\/github\.com\/giveme8\/game-stop"/);
+});
