@@ -1,0 +1,16 @@
+# HTTP bootstrap only. Replace the domain and enable HTTPS before real use.
+# Do not expose the data directory via an alias; all requests go through Go auth.
+server {
+    listen 80;
+    server_name games.example.com;
+    client_max_body_size 512m;
+    location / {
+        proxy_pass http://127.0.0.1:18080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_request_buffering off;
+        proxy_read_timeout 900s;
+        proxy_send_timeout 900s;
+    }
+}

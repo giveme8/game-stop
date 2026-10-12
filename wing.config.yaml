@@ -1,0 +1,55 @@
+version: 1
+project:
+  name: game-stop
+  type: backend
+  language: go
+  package_manager: none
+  subprojects: []
+paths:
+  root_agents: AGENTS.md
+  docs: docs
+  domain_docs: docs/domain
+  adr_docs: docs/adr
+  openspec: openspec
+  templates: templates/wing
+defaults:
+  adr_padding: 4
+  agents_max_lines: 180
+  local_agents_max_lines: 120
+features:
+  openspec: auto
+  hooks: false
+  docs_frontmatter: true
+  generate_indexes: true
+domain:
+  create_local_agents_by_default: true
+  create_rules_by_default: true
+  create_state_machine_by_default: false
+  create_glossary_by_default: false
+validation:
+  require_doc_frontmatter:
+    - docs/domain/**/*.md
+    - docs/architecture/**/*.md
+    - docs/api/**/*.md
+    - docs/engineering/**/*.md
+    - docs/runbooks/**/*.md
+  required_frontmatter:
+    - title
+    - status
+    - owner
+    - last_reviewed
+  stale_review_days:
+    active: 180
+    draft: 365
+risk_keywords:
+  - permission
+  - authorization
+  - audit
+  - webhook
+  - callback
+  - security
+  - credential
+  - economy
+  - purchase
+  - currency
+  - recharge

@@ -1,0 +1,43 @@
+# Secrets and operator-local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+server.env
+known_hosts
+
+# Outputs and caches
+.DS_Store
+__pycache__/
+*.pyc
+.godot/
+node_modules/
+out/
+dist/
+artifacts/
+coverage/
+server/data/
+server/server
+server/gamestop
+server/*.exe
+
+# Native clients are maintained separately; never publish them here.
+/app/
+/frame/
+/android/
+/ios/
+/harmony/
+/vendor/
+*.hap
+*.hsp
+*.har
+*.apk
+*.aab
+*.ipa
+*.pck
+*.game

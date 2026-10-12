@@ -1,0 +1,77 @@
+name: CLI build and release
+on:
+  push:
+    tags: ['v*', 'cli-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {goos: darwin, goarch: arm64}
+          - {goos: darwin, goarch: amd64}
+          - {goos: linux, goarch: amd64}
+          - {goos: linux, goarch: arm64}
+          - {goos: windows, goarch: amd64}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: server/go.sum
+      - name: Verify public scope and CLI
+        run: |
+          python3 scripts/check-public-boundary.py
+          cd server
+          go mod verify
+          go test -count=1 ./cmd/gamestop
+      - name: Build with licenses and corresponding MPL source
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          BUILD_VERSION: ${{ github.sha }}
+        run: bash scripts/package-cli.sh
+      - name: Smoke test Linux executable
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: |
+          tar -xzf dist/gamestop-linux-amd64.tar.gz -C dist
+          dist/gamestop-linux-amd64/gamestop version
+          test -f dist/gamestop-linux-amd64/LICENSE
+          test -f dist/gamestop-linux-amd64/third_party/source/go-sql-driver-mysql-v1.7.0.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gamestop-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*.tar.gz
+          retention-days: 30
+  publish:
+    if: github.repository == 'giveme8/game-stop' && (github.ref_type == 'tag' || github.ref == 'refs/heads/main')
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish complete distribution archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum *.tar.gz > SHA256SUMS)
+          tag=cli-latest
+          if [ "$GITHUB_REF_TYPE" = tag ]; then tag="$GITHUB_REF_NAME"; fi
+          notes="Built from $GITHUB_SHA. Each archive contains licenses, notices, build information and corresponding MPL driver source. Native player clients are not included."
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "gamestop CLI $tag" --notes "$notes"
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes "$notes"
+          gh release upload "$tag" --repo "$GITHUB_REPOSITORY" dist/* --clobber

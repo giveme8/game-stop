@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game Stop SDK 接入示例</title>
+<body>
+  <h1>游戏内 SDK 接入示例</h1>
+  <p>此示例由受信任宿主调用 startGameStopExample 配置。不要在此文件里填写账号 Token。</p>
+  <button id="speak" disabled>朗读提示</button>
+  <button id="score" disabled>提交示例成绩 120 分</button>
+  <button id="leaderboard" disabled>读取排行榜</button>
+  <pre id="status" aria-live="polite">等待宿主配置</pre>
+  <script src="https://game-stop.baobaobao.online/sdk/v1/game-stop.js"></script>
+  <script>
+    let sdk;
+    let submissionId;
+    const status = document.getElementById('status');
+    window.startGameStopExample = function (configuration) {
+      if (sdk) sdk.dispose();
+      sdk = new GameStopSDK(configuration);
+      submissionId = GameStopSDK.submissionId();
+      document.querySelectorAll('button').forEach(button => { button.disabled = false; });
+      status.textContent = '已配置；本页重复点击提交会复用同一 ID，演示幂等重试。';
+    };
+    async function run(action) {
+      try { status.textContent = JSON.stringify(await action()) || '朗读完成'; }
+      catch (error) { status.textContent = `${error.code}: ${error.message}`; }
+    }
+    document.getElementById('speak').onclick = () => run(() => sdk.speak('恭喜你，获得了一百二十分！'));
+    document.getElementById('score').onclick = () => run(() => sdk.submitScore(120, { submissionId }));
+    document.getElementById('leaderboard').onclick = () => run(() => sdk.getLeaderboard());
+    window.addEventListener('pagehide', () => { if (sdk) sdk.dispose(); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+Game Stop
+Copyright 2026 Game Stop contributors
+Maintained by giveme8.
+
+This product includes software developed by the Game Stop contributors.
+Original project code is licensed under the Apache License, Version 2.0.
+See LICENSE for the complete terms.
+
+Third-party dependencies retain their respective copyrights and licenses.
+See THIRD_PARTY_NOTICES.md and third_party/licenses/ for dependency notices.
+
+Native player applications (HarmonyOS, Android and iOS), runtime hosts,
+engine binaries, hosted games, game artwork, user data and production
+configuration are not included in or licensed by this source release.
+Names and trademarks of other projects remain the property of their owners.

@@ -1,0 +1,11 @@
+; Minimal standalone SDK validation project, not a host/frame configuration.
+config_version=5
+
+[application]
+config/name="GameStop SDK validation"
+
+[audio]
+general/text_to_speech=false
+
+[rendering]
+renderer/rendering_method="gl_compatibility"

@@ -1,0 +1,64 @@
+name: Public source CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Public boundary and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-password
+          MYSQL_DATABASE: gamestop_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=5s --health-timeout=3s --health-retries=30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: server/go.sum
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Check public source boundary
+        run: python3 scripts/check-public-boundary.py
+      - name: Scan source and history for credentials
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/gitleaks.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o "$archive"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $archive" | sha256sum -c -
+          tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git . --redact=100 --no-banner
+      - name: Test server and CLI with disposable MySQL
+        working-directory: server
+        env:
+          TEST_MYSQL_DSN: 'root:ci-only-password@tcp(127.0.0.1:3306)/gamestop_test?parseTime=true&charset=utf8mb4'
+        run: |
+          go mod verify
+          go vet ./...
+          go test -race -count=1 ./...
+          go build ./cmd/server ./cmd/gamestop
+      - name: Browser and deployment tests
+        run: |
+          node --test server/internal/library/*.test.cjs
+          python3 -m unittest discover -s deploy -p 'test_*.py' -v
+          docker compose -f deploy/compose.yaml config --quiet
+          bash -n scripts/package-cli.sh
+      - name: Governance validation
+        run: npx --yes @bossmissing/wing@0.14.2 check --strict
+      # No production environment, deploy job, SSH key or live OSS credentials.
