@@ -221,4 +221,19 @@ export const scripts = {
     return new Response(head ? null : sdkJS, { status: 200, headers });
   },
 };
+
+/**
+ * Same mark as the header brand: a "+" on mint. Served as SVG so the site has
+ * an icon without shipping a binary asset or depending on an external CDN.
+ */
+const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Game Stop"><rect width="32" height="32" rx="8" fill="#a5efd0"/><path d="M15 6h2v20h-2z" fill="#0a1020"/><path d="M6 15h20v2H6z" fill="#0a1020"/></svg>`;
+
+export const favicon = (head: boolean) => new Response(head ? null : FAVICON, {
+  status: 200,
+  headers: {
+    'Content-Type': 'image/svg+xml; charset=utf-8',
+    'Cache-Control': 'public, max-age=86400',
+    'X-Content-Type-Options': 'nosniff',
+  },
+});
 export { registerHTML, loginHTML, renderTemplate, HttpError, nowISO, randomHex, escapeHTML, parseAssets, representation, assetURL };

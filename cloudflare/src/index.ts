@@ -2,7 +2,7 @@ import { authenticate, handleAuth } from './auth';
 import { handlePlatform } from './platform';
 import { handleLibrary } from './library';
 import {
-  accountPage, connectPage, deviceConnectPage, homePage, leaderboardPage, pageHeaders,
+  accountPage, connectPage, deviceConnectPage, favicon, homePage, leaderboardPage, pageHeaders,
   registerHTML, loginHTML, renderTemplate, scripts,
 } from './pages';
 import { Env, HttpError, Identity, ID, json } from './types';
@@ -67,6 +67,7 @@ async function router(request: Request, env: Env, identity: Identity | null, req
   if (path === '/device-connect' && read) return deviceConnectPage(env, (url.searchParams.get('code') ?? '').trim().toUpperCase(), head);
   if (path === '/device-connect.js' && read) return scripts.deviceConnect(head);
   if (path === '/sdk/v1/game-stop.js' && read) return scripts.sdk(head);
+  if ((path === '/favicon.svg' || path === '/favicon.ico') && read) return favicon(head);
   const board = /^\/leaderboards\/([^/]+)$/.exec(path);
   if (board && read) return leaderboardPage(env, request, decodeURIComponent(board[1]!), head);
 
