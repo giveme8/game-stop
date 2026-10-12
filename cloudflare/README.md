@@ -46,6 +46,10 @@ Workers 从 R2 流式回源在实测中**极慢且会中途停住**（同一份�
 - **下载**：包由 Worker 从私有桶代理读出，支持 `Range`/`HEAD`/`ETag`；不对外暴露桶地址。
 - **密码**：PBKDF2-HMAC-SHA256 600,000 次。登录是 CPU 敏感路径，没有付费 Workers 计划时体验会明显受限；不要为了省钱下调迭代次数。
 
+## 已知的开发期依赖告警
+
+部署产物的运行期依赖只有 `@noble/hashes` 与 `fflate`，`npm audit --omit=dev` 为 0 条。测试工具链 `miniflare@4` 会带进 `sharp` / `undici` 的高危告警；它们**只在本地测试与打包链路**里，不进 Worker 产物，当前唯一的修复路径是升到 `miniflare@5` alpha（会改变测试 harness 的构造 API）。CI 因此对产物依赖做门禁、对开发依赖只报告不拦截。
+
 ## 常用命令
 
 ```sh
