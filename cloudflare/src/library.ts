@@ -115,13 +115,16 @@ async function storeStream(env: Env, key: string, gameID: string, body: Readable
   const upload = await env.PACKAGES.createMultipartUpload(key, { httpMetadata: packageMetadata(gameID) });
   const parts: R2UploadedPart[] = [];
   const reader = body.getReader();
-  let buffered: Uint8Array[] = []; let bufferedSize = 0; let size = 0; let partNumber = 1;
+  // Network read boundaries are arbitrary. R2 requires all non-final parts to
+  // have the same size, so assemble exactly PART_SIZE bytes before each write.
+  const buffered = new Uint8Array(PART_SIZE);
+  let bufferedSize = 0; let size = 0; let partNumber = 1;
   const flush = async () => {
     if (!bufferedSize) return;
-    const chunk = new Uint8Array(bufferedSize); let at = 0;
-    for (const piece of buffered) { chunk.set(piece, at); at += piece.length; }
-    buffered = []; bufferedSize = 0;
-    parts.push(await upload.uploadPart(partNumber++, chunk));
+    // Await consumption before reusing the buffer. Only the final part may be
+    // shorter; passing a view also avoids copying an entire part at flush time.
+    parts.push(await upload.uploadPart(partNumber++, buffered.subarray(0, bufferedSize)));
+    bufferedSize = 0;
   };
   try {
     for (;;) {
@@ -131,8 +134,13 @@ async function storeStream(env: Env, key: string, gameID: string, body: Readable
       size += value.length;
       if (size > limit) throw new HttpError(413, 'package exceeds native SaaS limit');
       hash.update(value);
-      buffered.push(value); bufferedSize += value.length;
-      if (bufferedSize >= PART_SIZE) await flush();
+      let offset = 0;
+      while (offset < value.length) {
+        const take = Math.min(PART_SIZE - bufferedSize, value.length - offset);
+        buffered.set(value.subarray(offset, offset + take), bufferedSize);
+        bufferedSize += take; offset += take;
+        if (bufferedSize === PART_SIZE) await flush();
+      }
     }
     await flush();
     if (size === 0) throw new HttpError(400, 'upload incomplete');
